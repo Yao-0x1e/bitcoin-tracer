@@ -5,8 +5,8 @@ from typing import List
 
 from blockchain import blockexplorer
 
-from src.bitcoin.rpc import BitcoinRPC
-from src.bitcoin.util import BitcoinUtils
+from src.bitcoin.bitcoin_rpc import BitcoinRPC
+from src.bitcoin.bitcoin_utils import BitcoinUtils
 from src.database.abused_account_dao import AbusedAccountDao
 from src.database.block_dao import BlockDao
 from src.service.abused_account_service import AbusedAccountService

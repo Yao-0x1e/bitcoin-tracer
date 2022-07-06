@@ -2,7 +2,7 @@ import time
 from datetime import datetime
 from typing import List
 
-from src.bitcoin.rpc import BitcoinRPC
+from src.bitcoin.bitcoin_rpc import BitcoinRPC
 from src.database.block_dao import BlockDao
 
 
