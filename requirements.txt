@@ -1,0 +1,8 @@
+python-bitcoinrpc==1.0
+sqlalchemy==1.4.39
+flask==2.1.2
+flask-cors==3.0.10
+ujson=5.3.0
+pymysql==1.0.2
+base58==2.1.1
+blockchain==1.4.4

@@ -1,0 +1,19 @@
+version: '3'
+
+services:
+  bitcoin-node:
+    container_name: bitcoin-node
+    image: kylemanna/bitcoind:latest
+    restart: always
+    privileged: true
+    environment:
+      RPCUSER: "btcgxnu"
+      RPCPASSWORD: "IReXyKSiQGbAHyfS"
+      PRINTTOCONSOLE: "1"
+      DISABLEWALLET: "0"
+    ports:
+      - 8333:8333
+      - 8332:8332
+    command: "bitcoind -rpcbind=:8332 -rpcallowip=0.0.0.0/0"
+    volumes:
+      - ./data:/bitcoin/.bitcoin
