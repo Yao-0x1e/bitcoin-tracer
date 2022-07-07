@@ -83,7 +83,7 @@ def get_all_txs_of_account(address: str) -> List[dict]:
     for tx in target_address.transactions:
         is_risky = False
         for item in tx.inputs + tx.outputs:
-            if abused_account_service.is_abused_account(item.address):
+            if item.address in abused_account_service.abused_account_set:
                 is_risky = True
                 break
         result.append({
