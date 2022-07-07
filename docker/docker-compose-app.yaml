@@ -1,0 +1,14 @@
+version: '3'
+
+services:
+  bitcoin-tracer-app:
+    container_name: bitcoin-tracer-app
+    restart: always
+    privileged: true
+    image: "bitcoin-tracer-app:latest"
+    ports:
+      - "5000:5000"
+    working_dir: /opt/bitcoin-tracer
+    command: "python3 app.py"
+    volumes:
+      - ./application:/opt/bitcoin-tracer

@@ -10,15 +10,14 @@ from src.app_config import app_ini as ai
 
 api_token = ai.get('bitcoinAbuse', 'apiToken')
 
+CsvItem = namedtuple('CsvItem', ['id', 'address', 'abuse_type_id', 'abuse_type_other', 'abuser', 'description', 'from_country', 'from_country_code', 'created_at'])
+
 
 class TimePeriod(Enum):
     day = '1d'
     month = '30d'
     forever = 'forever'
     pass
-
-
-CsvItem = namedtuple('CsvItem', ['id', 'address', 'abuse_type_id', 'abuse_type_other', 'abuser', 'description', 'from_country', 'from_country_code', 'created_at'])
 
 
 def download_csv(file: str, time_period: TimePeriod = TimePeriod.forever):
