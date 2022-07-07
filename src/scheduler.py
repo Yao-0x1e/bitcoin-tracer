@@ -17,7 +17,8 @@ def scheduled_task():
 
 
 def setup_schedules():
-    schedule.every(5).minutes.do(scheduled_task)
+    # schedule.every(5).minutes.do(scheduled_task)
+    schedule.every(1).seconds.do(scheduled_task)
 
     def run_schedules():
         while True:

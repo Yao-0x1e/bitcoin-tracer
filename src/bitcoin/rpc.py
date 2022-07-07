@@ -1,82 +1,84 @@
-from threading import Lock
+from queue import Queue
+from threading import BoundedSemaphore
 from typing import List
 
 from bitcoinrpc.authproxy import AuthServiceProxy
 
 from src.app_config import app_ini as ai
 
-proxy = AuthServiceProxy("http://%s:%s@%s:%d" % (
-    ai.get('bitcoinRPC', 'user'),
-    ai.get('bitcoinRPC', 'password'),
-    ai.get('bitcoinRPC', 'host'),
-    ai.getint('bitcoinRPC', 'port')
-))
-mutex = Lock()
+proxy_qsize = 4
+proxy_queue = Queue()
+mutex = BoundedSemaphore(proxy_qsize)
 
 
-def concurrent(target):
-    def wrapper(*args, **kwargs):
-        try:
-            mutex.acquire()
-            return target(*args, **kwargs)
-        finally:
-            mutex.release()
-        pass
+def execute(target):
+    mutex.acquire()
+    proxy = proxy_queue.get()
+    try:
+        return target(proxy)
+    finally:
+        proxy_queue.put(proxy)
+        mutex.release()
+    pass
 
-    return wrapper
+
+def init_proxy_queue():
+    proxy_url = "http://%s:%s@%s:%d" % (
+        ai.get('bitcoinRPC', 'user'),
+        ai.get('bitcoinRPC', 'password'),
+        ai.get('bitcoinRPC', 'host'),
+        ai.getint('bitcoinRPC', 'port')
+    )
+    for _ in range(proxy_qsize):
+        proxy = AuthServiceProxy(proxy_url)
+        proxy_queue.put(proxy)
+    pass
 
 
-@concurrent
 def get_raw_transaction(txid: str) -> dict:
-    return proxy.getrawtransaction(txid, 1)
+    return execute(lambda proxy: proxy.getrawtransaction(txid, 1))
 
 
-@concurrent
 def get_raw_transactions(txids: List[str]) -> List[dict]:
-    return proxy.batch_([['getrawtransaction', txid, 1] for txid in txids])
+    return execute(lambda proxy: proxy.batch_([['getrawtransaction', txid, 1] for txid in txids]))
 
 
-@concurrent
 def get_block_count() -> int:
-    return proxy.getblockcount()
+    return execute(lambda proxy: proxy.getblockcount())
 
 
-@concurrent
 def get_blockchain_info() -> dict:
-    return proxy.getblockchaininfo()
+    return execute(lambda proxy: proxy.getblockchaininfo())
 
 
-@concurrent
 def get_latest_block_hash() -> str:
-    return proxy.getbestblockhash()
+    return execute(lambda proxy: proxy.getbestblockhash())
 
 
-@concurrent
 def get_block_hash(block_num: int) -> str:
-    return proxy.getblockhash(block_num)
+    return execute(lambda proxy: proxy.getblockhash(block_num))
 
 
-@concurrent
 def get_block_hashes(block_nums: List[int]) -> List[dict]:
-    return proxy.batch_([['getblockhash', block_num] for block_num in block_nums])
+    return execute(lambda proxy: proxy.batch_([['getblockhash', block_num] for block_num in block_nums]))
 
 
-@concurrent
 def get_block(block_hash: str, only_txids: bool = False) -> dict:
     verbosity = 1 if only_txids else 2
-    return proxy.getblock(block_hash, verbosity)
+    return execute(lambda proxy: proxy.getblock(block_hash, verbosity))
 
 
-@concurrent
 def get_blocks(block_hashes: List[str], only_txids: bool = False) -> List[dict]:
     verbosity = 1 if only_txids else 2
-    return proxy.batch_([['getblock', block_hash, verbosity] for block_hash in block_hashes])
+    return execute(lambda proxy: proxy.batch_([['getblock', block_hash, verbosity] for block_hash in block_hashes]))
 
 
 def get_block_header(block_hash: str) -> dict:
-    return proxy.getblockheader(block_hash)
+    return execute(lambda proxy: proxy.getblockheader(block_hash))
 
 
-@concurrent
 def get_block_headers(block_hashes: List[str]) -> List[dict]:
-    return proxy.batch_([['getblockheader', block_hash] for block_hash in block_hashes])
+    return execute(lambda proxy: proxy.batch_([['getblockheader', block_hash] for block_hash in block_hashes]))
+
+
+init_proxy_queue()
