@@ -15,7 +15,7 @@ def is_risky_tx(tx: dict) -> bool:
     # inputs = util.get_tx_inputs(tx)
     # related_address_set = {vout.payee for vout in outputs}.union({vin.payer for vin in inputs})
     related_address_set = {vout.payee for vout in outputs}
-    return related_address_set.isdisjoint(abused_account_service.abused_account_set)
+    return not related_address_set.isdisjoint(abused_account_service.abused_account_set)
 
 
 def get_tx_inputs(txid: str) -> List[dict]:
@@ -41,7 +41,7 @@ def get_tx_outputs(txid: str) -> List[dict]:
 def get_input_txs(txid: str) -> List[dict]:
     tx = rpc.get_raw_transaction(txid)
     result = list()
-    if 'coinbase' not in tx['vin'][0]:
+    if not util.is_coinbase_tx(tx):
         spent_txids = [item['txid'] for item in tx['vin']]
         spent_txs = rpc.get_raw_transactions(spent_txids)
         for spent_tx in spent_txs:
@@ -52,7 +52,6 @@ def get_input_txs(txid: str) -> List[dict]:
     return result
 
 
-# TODO: 性能待优化
 def get_input_tx_tree(root_txid: str, depth: int, risky_only: bool) -> dict:
     assert depth >= 1
     root_tx = {
@@ -106,7 +105,7 @@ def get_payer_txs_of_account(address: str) -> List[dict]:
                 total_balance += item[1]
             total_balance /= 1e8
             related_address_set = {item.address for item in tx.inputs + tx.outputs}
-            is_risky = related_address_set.isdisjoint(abused_account_service.abused_account_set)
+            is_risky = not related_address_set.isdisjoint(abused_account_service.abused_account_set)
             result.append({
                 "txid": tx.hash,
                 "balance": total_balance,
@@ -127,7 +126,7 @@ def get_payee_txs_of_account(address: str) -> List[dict]:
                 total_balance += item[1]
             total_balance /= 1e8
             related_address_set = {item.address for item in tx.inputs + tx.outputs}
-            is_risky = related_address_set.isdisjoint(abused_account_service.abused_account_set)
+            is_risky = not related_address_set.isdisjoint(abused_account_service.abused_account_set)
             result.append({
                 "txid": tx.hash,
                 "balance": total_balance,
