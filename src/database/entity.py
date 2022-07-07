@@ -5,9 +5,9 @@ from src.database.sqlalchemy.config import engine, Base
 
 class Block(Base):
     __tablename__ = 'block'
-    no = Column(INT, primary_key=True)
+    height = Column(INT, primary_key=True, autoincrement=False)
     hash = Column(VARCHAR(128), nullable=False)
-    timestamp = Column(TIMESTAMP, nullable=False, index=True)
+    mined_at = Column(TIMESTAMP, nullable=False, index=True)
     num_txs = Column(INT, nullable=False)
     pass
 

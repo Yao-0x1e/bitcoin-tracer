@@ -27,7 +27,7 @@ def safe_query(target):
 
 def batch_insert(items: List[Base], batch_size: int):
     def target(session: Session):
-        start_index, end_index = 0, batch_size
+        start_index, end_index = 0, min(batch_size, len(items))
         while start_index < len(items):
             session.add_all(items[start_index:end_index])
             session.commit()
