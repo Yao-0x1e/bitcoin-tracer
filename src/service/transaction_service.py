@@ -42,16 +42,17 @@ def get_input_txs(txid: str) -> List[dict]:
     tx = rpc.get_raw_transaction(txid)
     result = list()
     if 'coinbase' not in tx['vin'][0]:
-        for item in tx['vin']:
-            spent_txid: str = item['txid']
-            spent_tx = rpc.get_raw_transaction(spent_txid)
+        spent_txids = [item['txid'] for item in tx['vin']]
+        spent_txs = rpc.get_raw_transactions(spent_txids)
+        for spent_tx in spent_txs:
             result.append({
-                "txid": spent_txid,
+                "txid": spent_tx['txid'],
                 "isRisky": is_risky_tx(spent_tx),
             })
     return result
 
 
+# TODO: 性能待优化
 def get_input_tx_tree(root_txid: str, depth: int, risky_only: bool) -> dict:
     assert depth >= 1
     root_tx = {
@@ -148,7 +149,7 @@ def get_latest_txs(block_count: int) -> List[dict]:
     result = list()
     block_hash = rpc.get_latest_block_hash()
     for _ in range(block_count):
-        block = rpc.get_block(block_hash, False)
+        block = rpc.get_block(block_hash)
         block_time = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(block['time']))
         for tx in block['tx']:
             result.append({

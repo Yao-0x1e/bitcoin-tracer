@@ -50,8 +50,8 @@ def get_related_abused_accounts(address: str):
     target_address = blockexplorer.get_address(address)
     txids = [tx.hash for tx in target_address.transactions]
     result = list()
-    for txid in txids:
-        tx = rpc.get_raw_transaction(txid)
+    txs = rpc.get_raw_transactions(txids)
+    for tx in txs:
         outputs = util.get_tx_outputs(tx)
         address_iter = [item.payee for item in outputs]
         for item in address_iter:

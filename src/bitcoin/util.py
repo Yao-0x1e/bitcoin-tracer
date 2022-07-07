@@ -56,10 +56,11 @@ def get_tx_inputs(tx: dict) -> List[TxIn]:
     inputs = list()
     if is_coinbase_tx(tx):
         return inputs
-    for item in tx['vin']:
-        spent_txid: str = item['txid']
+    spent_txids = [item['txid'] for item in tx['vin']]
+    spent_txs = rpc.get_raw_transactions(spent_txids)
+    for i, item in enumerate(tx['vin']):
         vout_no: int = item['vout']
-        spent_tx = rpc.get_raw_transaction(spent_txid)
+        spent_tx = spent_txs[i]
         vouts: list = spent_tx['vout']
         payer, balance = parse_vout(vouts[vout_no])
         inputs.append(TxIn(payer, balance))
@@ -80,6 +81,7 @@ def get_latest_txids(block_count: int) -> List[str]:
     for _ in range(block_count):
         block = rpc.get_block(block_hash, True)
         txids += block['tx']
+        block_hash = block['previousblockhash']
     return txids
 
 

@@ -7,7 +7,7 @@ from src.restapi.abused_account_restapi import setup_abused_account_restapi
 from src.restapi.address_restapi import setup_address_restapi
 from src.restapi.exchange_restapi import setup_exchange_restapi
 from src.restapi.transaction_restapi import setup_transaction_restapi
-from src.scheduler import setup_schedules, job
+from src.scheduler import setup_schedules
 
 app = Flask(__name__)
 CORS(app, supports_credentials=True)
@@ -31,10 +31,9 @@ def run_flask_server():
 
 if __name__ == '__main__':
     # 初始化定时任务
-    # setup_schedules()
+    setup_schedules()
     # 初始化所有 API
-    # setup_all_restapi()
+    setup_all_restapi()
     # 启动 Web 服务
-    # run_flask_server()
-    job()
+    run_flask_server()
     pass

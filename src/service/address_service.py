@@ -22,8 +22,9 @@ def get_active_address_count(start_time: int, end_time: int) -> int:
     end_time -= 28800
     blocks = block_dao.get_blocks_between_timestamps(datetime.fromtimestamp(start_time), datetime.fromtimestamp(end_time))
     result = 0
-    for item in blocks:
-        block = rpc.get_block(item.hash)
+    block_hashes = [item.hash for item in blocks]
+    blocks = rpc.get_blocks(block_hashes)
+    for block in blocks:
         for tx in block['tx']:
             result += len(tx['vin']) + len(tx['vout'])
     return result
