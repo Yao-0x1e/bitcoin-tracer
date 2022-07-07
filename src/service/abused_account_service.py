@@ -33,6 +33,7 @@ def is_abused_account(address: str) -> bool:
 def add_abused_account(address: str, message: str, abuser: str):
     abused_account = AbusedAccount(created_at=datetime.now(), message=message, address=address, uploader=abuser)
     abused_account_dao.insert_abused_account(abused_account)
+    abused_account_set.add(address)
     pass
 
 
