@@ -1,14 +1,13 @@
 from datetime import datetime
 
-import ujson
 from blockchain import blockexplorer
 
 from src.bitcoin import abuse_db, rpc, utils
-from src.config.redis_config import redis_conn, cacheable, cacheevit
+from src.config.redis_config import redis_conn, cacheable
 from src.database import abused_account_dao
 from src.database.entity import AbusedAccount
 from src.database.utils import batch_insert
-from src.service.block_explorer_service import get_address_info
+from src.service import block_explorer_service
 
 abused_account_set = set()
 
@@ -58,7 +57,7 @@ def get_abuse_messages(address: str):
 
 @cacheable(prefix='abused-account:related', ex=3600)
 def get_related_abused_accounts(address: str):
-    target_address = get_address_info(address)
+    target_address = block_explorer_service.get_address(address)
     txids = [tx.hash for tx in target_address.transactions]
     result = list()
     txs = rpc.get_raw_transactions(txids)

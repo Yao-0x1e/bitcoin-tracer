@@ -3,24 +3,30 @@ from datetime import datetime
 from queue import Queue, PriorityQueue
 from typing import List
 
-import ujson
 from blockchain import blockexplorer
 
 from src.bitcoin import utils, rpc
-from src.config.redis_config import redis_conn
+from src.config.redis_config import cacheable, redis_conn
 from src.database import block_dao
 from src.service import abused_account_service, block_explorer_service
 from src.service.abused_account_service import is_abused_account, has_abused_accounts_in
 
 
 def is_risky_tx(tx: dict) -> bool:
+    redis_key = "transaction:is-risky:" + tx['txid']
+    if redis_conn.exists(redis_key):
+        return True
     outputs = utils.get_tx_outputs(tx)
-    # inputs = util.get_tx_inputs(tx)
+    # inputs = utils.get_tx_inputs(tx)
     # related_address_set = {vout.payee for vout in outputs}.union({vin.payer for vin in inputs})
     related_address_set = {vout.payee for vout in outputs}
-    return has_abused_accounts_in(related_address_set)
+    is_risky = has_abused_accounts_in(related_address_set)
+    if is_risky:
+        redis_conn.set(redis_key, '', ex=3600)
+    return is_risky
 
 
+@cacheable(prefix='transaction:tx-inputs')
 def get_tx_inputs(txid: str) -> List[dict]:
     tx = rpc.get_raw_transaction(txid)
     inputs = utils.get_tx_inputs(tx)
@@ -31,6 +37,7 @@ def get_tx_inputs(txid: str) -> List[dict]:
     } for item in inputs]
 
 
+@cacheable(prefix='transaction:tx-outputs', ex=3600)
 def get_tx_outputs(txid: str) -> List[dict]:
     tx = rpc.get_raw_transaction(txid)
     outputs = utils.get_tx_outputs(tx)
@@ -41,6 +48,7 @@ def get_tx_outputs(txid: str) -> List[dict]:
     } for item in outputs]
 
 
+@cacheable(prefix='transaction:input-txs')
 def get_input_txs(txid: str) -> List[dict]:
     tx = rpc.get_raw_transaction(txid)
     result = list()
@@ -55,6 +63,7 @@ def get_input_txs(txid: str) -> List[dict]:
     return result
 
 
+@cacheable(prefix='transaction:input-tx-tree', ex=3600)
 def get_input_tx_tree(root_txid: str, depth: int, risky_only: bool) -> dict:
     assert depth >= 1
     root_tx = {
@@ -80,8 +89,9 @@ def get_input_tx_tree(root_txid: str, depth: int, risky_only: bool) -> dict:
     return root_tx
 
 
+@cacheable(prefix='transaction:account-txs', ex=3600)
 def get_all_txs_of_account(address: str) -> List[dict]:
-    target_address = block_explorer_service.get_address_info(address)
+    target_address = block_explorer_service.get_address(address)
     result = list()
     for tx in target_address.transactions:
         is_risky = False
@@ -96,8 +106,9 @@ def get_all_txs_of_account(address: str) -> List[dict]:
     return result
 
 
+@cacheable(prefix='transaction:account-payer-txs', ex=3600)
 def get_payer_txs_of_account(address: str) -> List[dict]:
-    target_address = block_explorer_service.get_address_info(address)
+    target_address = block_explorer_service.get_address(address)
     result = list()
     for tx in target_address.transactions:
         inputs = ((item.address, item.value) for item in tx.inputs)
@@ -117,8 +128,9 @@ def get_payer_txs_of_account(address: str) -> List[dict]:
     return result
 
 
+@cacheable(prefix='transaction:account-payee-txs', ex=3600)
 def get_payee_txs_of_account(address: str) -> List[dict]:
-    target_address = block_explorer_service.get_address_info(address)
+    target_address = block_explorer_service.get_address(address)
     result = list()
     for tx in target_address.transactions:
         outputs = ((item.address, item.value) for item in tx.outputs)
@@ -138,7 +150,9 @@ def get_payee_txs_of_account(address: str) -> List[dict]:
     return result
 
 
+@cacheable(prefix='transaction:unspent_outputs')
 def get_unspent_tx_outputs_of_account(address: str) -> List[dict]:
+    # noinspection PyTypeChecker
     outputs = block_explorer_service.get_unspent_outputs(address)
     return [{
         "txid": item.tx_hash,
@@ -146,6 +160,7 @@ def get_unspent_tx_outputs_of_account(address: str) -> List[dict]:
     } for item in outputs]
 
 
+@cacheable(prefix='transaction:latest-txs', ex=600)
 def get_latest_txs(block_count: int) -> List[dict]:
     result = list()
     block_hash = rpc.get_latest_block_hash()
@@ -165,6 +180,7 @@ def get_latest_txs(block_count: int) -> List[dict]:
     return list(risky_txs) + list(non_risky_txs)
 
 
+@cacheable(prefix='transaction:latest-risky-txs', ex=600)
 def get_latest_risky_txs(block_count: int) -> List[dict]:
     txs = list()
     block_hash = rpc.get_latest_block_hash()
@@ -188,6 +204,7 @@ def get_latest_risky_txs(block_count: int) -> List[dict]:
     return list(sorted(result, key=lambda x: x['balance'], reverse=True))
 
 
+@cacheable(prefix='transaction:latest-tx-count', ex=600)
 def get_latest_tx_count(block_count: int) -> int:
     block_hash = rpc.get_latest_block_hash()
     result = 0
@@ -198,6 +215,7 @@ def get_latest_tx_count(block_count: int) -> int:
     return result
 
 
+@cacheable(prefix='transaction:count-between-times')
 def get_tx_count(start_time: int, end_time: int) -> int:
     start_time -= 28800
     end_time -= 28800
@@ -208,6 +226,7 @@ def get_tx_count(start_time: int, end_time: int) -> int:
     return result
 
 
+@cacheable(prefix='transaction:count-in-recent-hours', ex=3600)
 def get_tx_counts_in_recent_hours(num_hours: int) -> List[dict]:
     result = list()
     end_time = int(datetime.now().replace(minute=0, second=0, microsecond=0).timestamp())
@@ -223,6 +242,7 @@ def get_tx_counts_in_recent_hours(num_hours: int) -> List[dict]:
     return list(reversed(result))
 
 
+@cacheable(prefix='transaction:large-balance-txs', ex=600)
 def get_latest_large_balance_txs(block_count: int, tx_count: int) -> List[dict]:
     txs = list()
     block_hash = rpc.get_latest_block_hash()
@@ -257,6 +277,7 @@ def get_latest_large_balance_txs(block_count: int, tx_count: int) -> List[dict]:
     return list(reversed(result))
 
 
+@cacheable(prefix='transaction:large-balance-tx-count', ex=600)
 def get_latest_large_balance_tx_count(block_count: int, min_balance: float) -> int:
     block_hash = rpc.get_latest_block_hash()
     result = 0

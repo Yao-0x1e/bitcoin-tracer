@@ -1,16 +1,18 @@
+import pickle
 from typing import List
 
 from blockchain import blockexplorer
-from blockchain.blockexplorer import Address, UnspentOutput
+from blockchain.blockexplorer import UnspentOutput, Address
 
 from src.config.redis_config import cacheable
 
 
-@cacheable(prefix='blockexplorer-address', ex=3600)
-def get_address_info(address: str) -> Address:
+@cacheable(prefix='blockexplorer:address', serializer=pickle.dumps, deserializer=pickle.loads)
+def get_address(address: str) -> Address:
     return blockexplorer.get_address(address)
 
 
-@cacheable(prefix='blockexplorer-unspent_outputs', ex=3600)
+@cacheable(prefix='blockexplorer:unspent-outputs', serializer=pickle.dumps, deserializer=pickle.loads)
 def get_unspent_outputs(address: str) -> List[UnspentOutput]:
-    return blockexplorer.get_unspent_outputs((address,))
+    # noinspection PyTypeChecker
+    return blockexplorer.get_unspent_outputs(address)
