@@ -1,11 +1,14 @@
 from datetime import datetime
 
+import ujson
 from blockchain import blockexplorer
 
 from src.bitcoin import abuse_db, rpc, utils
+from src.config.redis_config import redis_conn
 from src.database import abused_account_dao
 from src.database.entity import AbusedAccount
 from src.database.utils import batch_insert
+from src.service.block_explorer_service import get_address_info
 
 abused_account_set = set()
 
@@ -13,7 +16,7 @@ abused_account_set = set()
 def init_abused_account_set():
     abused_addresses = abused_account_dao.select_all_addresses()
     for address in abused_addresses:
-        abused_account_set.add(address.lower())
+        abused_account_set.add(address)
     print(f"恶意地址数据集初始化完成：{len(abused_account_set)}")
     pass
 
@@ -27,27 +30,46 @@ def init_abused_account_table():
 
 
 def is_abused_account(address: str) -> bool:
-    return abused_account_dao.exists_by_address(address)
+    return address in abused_account_set
+
+
+def has_abused_accounts_in(address_set: set) -> bool:
+    return not address_set.isdisjoint(abused_account_set)
 
 
 def add_abused_account(address: str, message: str, abuser: str):
     abused_account = AbusedAccount(created_at=datetime.now(), message=message, address=address, uploader=abuser)
     abused_account_dao.insert_abused_account(abused_account)
     abused_account_set.add(address)
+    # 清除对应地址的缓存
+    redis_key = 'abuse-messages:' + address
+    redis_conn.delete(redis_key)
     pass
 
 
 def get_abuse_messages(address: str):
+    redis_key = 'abuse-messages:' + address
+    redis_val = redis_conn.get(redis_key)
+    if redis_val is not None:
+        return ujson.loads(redis_val)
+
     abused_accounts = abused_account_dao.select_by_address(address)
-    return [{
+    result = [{
         "message": item.message,
         "translatedMessage": item.message,
         "info": f'{item.uploader} 上传于 {item.created_at.strftime("%Y-%m-%d %H:%M:%S")}'
     } for item in abused_accounts]
+    redis_conn.set(redis_key, ujson.dumps(result))
+    return result
 
 
 def get_related_abused_accounts(address: str):
-    target_address = blockexplorer.get_address(address)
+    redis_key = 'related-abuse-accounts:' + address
+    redis_val = redis_conn.get(redis_key)
+    if redis_val is not None:
+        return ujson.loads(redis_val)
+
+    target_address = get_address_info(address)
     txids = [tx.hash for tx in target_address.transactions]
     result = list()
     txs = rpc.get_raw_transactions(txids)
@@ -62,6 +84,7 @@ def get_related_abused_accounts(address: str):
                         "address": item,
                         "abuses": messages
                     })
+    redis_conn.set(redis_key, ujson.dumps(result), ex=6 * 3600)
     return result
 
 

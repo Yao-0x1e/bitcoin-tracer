@@ -2,9 +2,11 @@ from queue import Queue
 from threading import BoundedSemaphore
 from typing import List
 
+import ujson
 from bitcoinrpc.authproxy import AuthServiceProxy
 
 from src.config.app_config import app_ini as ai
+from src.config.redis_config import redis_conn
 
 proxy_url = "http://%s:%s@%s:%d" % (
     ai.get('bitcoin', 'rpc_user'),
@@ -41,6 +43,10 @@ def execute(target):
 
 
 def get_raw_transaction(txid: str) -> dict:
+    redis_key = 'rawtransactions:' + txid
+    redis_val = redis_conn.get(redis_key)
+    if redis_val is not None:
+        return ujson.loads(redis_val)
     return execute(lambda proxy: proxy.getrawtransaction(txid, 1))
 
 

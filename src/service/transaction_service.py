@@ -9,15 +9,16 @@ from blockchain import blockexplorer
 from src.bitcoin import utils, rpc
 from src.config.redis_config import redis_conn
 from src.database import block_dao
-from src.service import abused_account_service
+from src.service import abused_account_service, block_explorer_service
+from src.service.abused_account_service import is_abused_account, has_abused_accounts_in
 
 
 def is_risky_tx(tx: dict) -> bool:
     outputs = utils.get_tx_outputs(tx)
     # inputs = util.get_tx_inputs(tx)
-    # related_address_set = {vout.payee.lower() for vout in outputs}.union({vin.payer.lower() for vin in inputs})
-    related_address_set = {vout.payee.lower() for vout in outputs}
-    return not related_address_set.isdisjoint(abused_account_service.abused_account_set)
+    # related_address_set = {vout.payee for vout in outputs}.union({vin.payer for vin in inputs})
+    related_address_set = {vout.payee for vout in outputs}
+    return has_abused_accounts_in(related_address_set)
 
 
 def get_tx_inputs(txid: str) -> List[dict]:
@@ -80,12 +81,12 @@ def get_input_tx_tree(root_txid: str, depth: int, risky_only: bool) -> dict:
 
 
 def get_all_txs_of_account(address: str) -> List[dict]:
-    target_address = blockexplorer.get_address(address)
+    target_address = block_explorer_service.get_address_info(address)
     result = list()
     for tx in target_address.transactions:
         is_risky = False
         for item in tx.inputs + tx.outputs:
-            if item.address in abused_account_service.abused_account_set:
+            if is_abused_account(item.address):
                 is_risky = True
                 break
         result.append({
@@ -96,7 +97,7 @@ def get_all_txs_of_account(address: str) -> List[dict]:
 
 
 def get_payer_txs_of_account(address: str) -> List[dict]:
-    target_address = blockexplorer.get_address(address)
+    target_address = block_explorer_service.get_address_info(address)
     result = list()
     for tx in target_address.transactions:
         inputs = ((item.address, item.value) for item in tx.inputs)
@@ -106,8 +107,8 @@ def get_payer_txs_of_account(address: str) -> List[dict]:
             for item in inputs:
                 total_balance += item[1]
             total_balance /= 1e8
-            related_address_set = {item.address.lower() for item in tx.inputs + tx.outputs}
-            is_risky = not related_address_set.isdisjoint(abused_account_service.abused_account_set)
+            related_address_set = {item.address for item in tx.inputs + tx.outputs}
+            is_risky = has_abused_accounts_in(related_address_set)
             result.append({
                 "txid": tx.hash,
                 "balance": total_balance,
@@ -117,7 +118,7 @@ def get_payer_txs_of_account(address: str) -> List[dict]:
 
 
 def get_payee_txs_of_account(address: str) -> List[dict]:
-    target_address = blockexplorer.get_address(address)
+    target_address = block_explorer_service.get_address_info(address)
     result = list()
     for tx in target_address.transactions:
         outputs = ((item.address, item.value) for item in tx.outputs)
@@ -127,8 +128,8 @@ def get_payee_txs_of_account(address: str) -> List[dict]:
             for item in outputs:
                 total_balance += item[1]
             total_balance /= 1e8
-            related_address_set = {item.address.lower() for item in tx.inputs + tx.outputs}
-            is_risky = not related_address_set.isdisjoint(abused_account_service.abused_account_set)
+            related_address_set = {item.address for item in tx.inputs + tx.outputs}
+            is_risky = has_abused_accounts_in(related_address_set)
             result.append({
                 "txid": tx.hash,
                 "balance": total_balance,
@@ -138,8 +139,7 @@ def get_payee_txs_of_account(address: str) -> List[dict]:
 
 
 def get_unspent_tx_outputs_of_account(address: str) -> List[dict]:
-    # noinspection PyTypeChecker
-    outputs = blockexplorer.get_unspent_outputs(address)
+    outputs = block_explorer_service.get_unspent_outputs(address)
     return [{
         "txid": item.tx_hash,
         "vout": item.tx_output_n
