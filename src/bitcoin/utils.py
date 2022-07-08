@@ -38,7 +38,7 @@ def parse_vout(vout: dict) -> Tuple[str, float]:
         balance = float(vout['value'])
         return address, balance
     else:
-        address = script['address'] if 'address' in script else 'Unknown Address'
+        address = script['address'] if 'address' in script else '0'.zfill(26)
         balance = float(vout['value']) if 'value' in vout else 0.0
         return address, balance
 

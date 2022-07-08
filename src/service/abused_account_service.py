@@ -42,12 +42,11 @@ def add_abused_account(address: str, message: str, abuser: str):
     abused_account_dao.insert_abused_account(abused_account)
     abused_account_set.add(address)
     # 清除对应地址的缓存
-    redis_key = 'abuse-messages:' + address
-    redis_conn.delete(redis_key)
+    redis_conn.delete('abused-account:messages:' + address)
     pass
 
 
-@cacheable(prefix='abuse-messages')
+@cacheable(prefix='abused-account:messages')
 def get_abuse_messages(address: str):
     abused_accounts = abused_account_dao.select_by_address(address)
     return [{
@@ -57,7 +56,7 @@ def get_abuse_messages(address: str):
     } for item in abused_accounts]
 
 
-@cacheable(prefix='related-abused-accounts', ex=3600)
+@cacheable(prefix='abused-account:related', ex=3600)
 def get_related_abused_accounts(address: str):
     target_address = get_address_info(address)
     txids = [tx.hash for tx in target_address.transactions]

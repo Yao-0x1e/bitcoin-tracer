@@ -2,13 +2,12 @@ import time
 from datetime import datetime
 from typing import List
 
-import ujson
-
 from src.bitcoin import rpc
-from src.config.redis_config import redis_conn
+from src.config.redis_config import cacheable
 from src.database import block_dao
 
 
+@cacheable(prefix='address:count-in-latest-blocks')
 def get_latest_active_address_count(block_count: int) -> int:
     block_hash = rpc.get_latest_block_hash()
     result = 0
@@ -20,6 +19,7 @@ def get_latest_active_address_count(block_count: int) -> int:
     return result
 
 
+@cacheable(prefix='address:count-between-times')
 def get_active_address_count(start_time: int, end_time: int) -> int:
     start_time -= 28800
     end_time -= 28800
@@ -33,6 +33,7 @@ def get_active_address_count(start_time: int, end_time: int) -> int:
     return result
 
 
+@cacheable(prefix='address:counts-in-recent-hours')
 def get_active_address_counts_in_recent_hours(num_hours: int) -> List[dict]:
     result = list()
     end_time = int(datetime.now().replace(minute=0, second=0, microsecond=0).timestamp())

@@ -1,7 +1,4 @@
 from datetime import datetime
-import time
-from threading import Thread
-import schedule
 
 from src.bitcoin import rpc
 from src.database import block_dao
@@ -27,18 +24,4 @@ def synchronize_blocks(batch_size: int):
         block_hash = block_header['nextblockhash']
     if len(blocks) > 0:
         batch_insert(blocks, batch_size)
-    pass
-
-
-def setup_schedules():
-    schedule.every(10).minutes.do(lambda: synchronize_blocks(batch_size=64))
-
-    def run_schedules():
-        print("定时任务已开始执行！")
-        schedule.run_all(delay_seconds=10 * 60)
-        while True:
-            schedule.run_pending()
-            time.sleep(15)
-
-    Thread(target=run_schedules).start()
     pass
