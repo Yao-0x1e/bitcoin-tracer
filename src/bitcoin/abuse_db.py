@@ -6,9 +6,9 @@ from typing import List
 import requests
 from enum import Enum
 
-from src.app_config import app_ini as ai
+from src.config.app_config import app_ini as ai
 
-api_token = ai.get('bitcoinAbuse', 'apiToken')
+api_token = ai.get('bitcoin', 'abuse_db_api_token')
 
 CsvItem = namedtuple('CsvItem', ['id', 'address', 'abuse_type_id', 'abuse_type_other', 'abuser', 'description', 'from_country', 'from_country_code', 'created_at'])
 

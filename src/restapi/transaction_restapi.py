@@ -1,6 +1,5 @@
 from flask import request
 
-from src import app_context
 from src.restapi.restapi_decorator import restapi
 from src.service import transaction_service
 
@@ -73,7 +72,7 @@ def setup_transaction_restapi(app):
     @app.route('/btc/getCachedLargeBalanceTransactions', methods=['GET', 'POST'])
     @restapi
     def get_cached_large_balance_transactions():
-        txs = app_context.cached_large_balance_transactions
+        txs = transaction_service.get_cached_large_balance_transactions()
         return {"txs": txs}
 
     @app.route('/btc/getLatestRiskyTransactions', methods=['GET', 'POST'])
@@ -86,7 +85,7 @@ def setup_transaction_restapi(app):
     @app.route('/btc/getCachedRiskyTransactions', methods=['GET', 'POST'])
     @restapi
     def get_cached_risky_transactions():
-        txs = app_context.cached_risky_transactions
+        txs = transaction_service.get_cached_risky_transactions()
         return {"txs": txs}
 
     @app.route('/btc/getLatestTransactionCount', methods=['GET', 'POST'])
@@ -115,7 +114,7 @@ def setup_transaction_restapi(app):
     @app.route('/btc/getTransactionCountInRecentHours', methods=['GET', 'POST'])
     @restapi
     def get_transaction_count_in_recent_hours():
-        tx_counts = app_context.cached_transaction_count_in_recent_hours
+        tx_counts = transaction_service.get_transaction_count_in_recent_hours()
         return {"txCounts": tx_counts}
 
     @app.route('/btc/getInputTransactionTree', methods=['GET', 'POST'])

@@ -3,9 +3,11 @@ from datetime import datetime
 from queue import Queue, PriorityQueue
 from typing import List
 
+import ujson
 from blockchain import blockexplorer
 
 from src.bitcoin import util, rpc
+from src.config.redis_config import redis_conn
 from src.database import block_dao
 from src.service import abused_account_service
 
@@ -266,3 +268,19 @@ def get_latest_large_balance_tx_count(block_count: int, min_balance: float) -> i
                 result += 1
         block_hash = block['previousblockhash']
     return result
+
+
+def get_transaction_count_in_recent_hours():
+    json_str = redis_conn.get('statistic:transaction-count-in-recent-hours')
+    tx_counts = ujson.loads(json_str) if json_str is not None else []
+    return tx_counts
+
+
+def get_cached_risky_transactions():
+    json_str = redis_conn.get('statistic:risky-transactions')
+    return ujson.loads(json_str) if json_str is not None else []
+
+
+def get_cached_large_balance_transactions():
+    json_str = redis_conn.get('statistic:large-balance-transactions')
+    return ujson.loads(json_str) if json_str else []

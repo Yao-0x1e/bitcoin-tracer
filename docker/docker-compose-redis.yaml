@@ -1,0 +1,12 @@
+version: '3'
+
+services:
+  bitcoin-tracer-redis:
+    container_name: bitcoin-tracer-redis
+    restart: always
+    image: "redis:6.2"
+    ports:
+      - "6379:6379"
+    command: "redis-server --requirepass vc8wNxd1pY9Sj6Qw"
+    volumes:
+      - ./redis:/data

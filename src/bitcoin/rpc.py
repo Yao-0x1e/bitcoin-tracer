@@ -4,16 +4,16 @@ from typing import List
 
 from bitcoinrpc.authproxy import AuthServiceProxy
 
-from src.app_config import app_ini as ai
+from src.config.app_config import app_ini as ai
 
 proxy_url = "http://%s:%s@%s:%d" % (
-    ai.get('bitcoinRPC', 'user'),
-    ai.get('bitcoinRPC', 'password'),
-    ai.get('bitcoinRPC', 'host'),
-    ai.getint('bitcoinRPC', 'port')
+    ai.get('bitcoin', 'rpc_user'),
+    ai.get('bitcoin', 'rpc_password'),
+    ai.get('bitcoin', 'rpc_host'),
+    ai.getint('bitcoin', 'rpc_port')
 )
-proxy_timeout = ai.getint('bitcoinRPC', 'timeout')
-proxy_qsize = ai.getint('bitcoinRPC', 'proxySize')
+proxy_timeout = ai.getint('bitcoin', 'rpc_timeout')
+proxy_qsize = ai.getint('bitcoin', 'proxy_queue_size')
 proxy_queue = Queue()
 mutex = BoundedSemaphore(proxy_qsize)
 

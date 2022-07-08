@@ -2,7 +2,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
-from src.app_config import app_ini as ai
+from src.config.app_config import app_ini as ai
 
 # 创建 SQLAlchemy Engine
 engine = create_engine("mysql+pymysql://%s:%s@%s:%d/%s?charset=utf8mb4" % (
@@ -11,7 +11,7 @@ engine = create_engine("mysql+pymysql://%s:%s@%s:%d/%s?charset=utf8mb4" % (
     ai.get('mysql', 'host'),
     ai.getint('mysql', 'port'),
     ai.get('mysql', 'schema')
-), pool_size=ai.getint('mysql', 'poolSize'), echo=True)
+), pool_size=ai.getint('mysql', 'pool_size'), echo=True)
 
 Base = declarative_base()
 Session = sessionmaker(bind=engine)

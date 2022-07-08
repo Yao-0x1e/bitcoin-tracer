@@ -1,6 +1,6 @@
 from typing import List
 
-from src.database.sqlalchemy.config import Session, Base
+from src.config.sqlalchemy_config import Session, Base
 
 
 def safe_update(target):

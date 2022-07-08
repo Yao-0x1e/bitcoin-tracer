@@ -1,6 +1,6 @@
 from sqlalchemy import Column, TIMESTAMP, INT, VARCHAR, TEXT
 
-from src.database.sqlalchemy.config import engine, Base
+from src.config.sqlalchemy_config import engine, Base
 
 
 class Block(Base):

@@ -1,6 +1,6 @@
 from flask import request
 
-from src import app_context
+
 from src.restapi.restapi_decorator import restapi
 from src.service import address_service
 
@@ -16,7 +16,7 @@ def setup_address_restapi(app):
     @app.route('/btc/getActiveAddressCountInRecentHours', methods=['GET', 'POST'])
     @restapi
     def get_active_address_count_in_recent_hours():
-        address_counts = app_context.cached_active_address_count_in_recent_hours
+        address_counts = address_service.get_cached_active_address_count_in_recent_hours
         return {"addressCounts": address_counts}
 
     @app.route('/btc/getActiveAddressCount', methods=['GET', 'POST'])

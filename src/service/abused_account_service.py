@@ -2,10 +2,10 @@ from datetime import datetime
 
 from blockchain import blockexplorer
 
-from src.bitcoin import abuse, rpc, util
+from src.bitcoin import abuse_db, rpc, util
 from src.database import abused_account_dao
 from src.database.entity import AbusedAccount
-from src.database.sqlalchemy.util import batch_insert
+from src.database.sqlalchemy_utils import batch_insert
 
 abused_account_set = set()
 
@@ -20,7 +20,7 @@ def init_abused_account_set():
 
 def init_abused_account_table():
     if abused_account_dao.count_all() == 0:
-        items = abuse.parse_csv("dataset/bitcoin-abuse.csv")
+        items = abuse_db.parse_csv("dataset/bitcoin-abuse.csv")
         abused_accounts = [AbusedAccount(created_at=item.created_at, message=item.description, address=item.address, uploader=item.abuser) for item in items]
         batch_insert(abused_accounts, 2048)
     pass
