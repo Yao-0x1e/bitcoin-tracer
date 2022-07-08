@@ -13,8 +13,8 @@ from src.service import abused_account_service
 def is_risky_tx(tx: dict) -> bool:
     outputs = util.get_tx_outputs(tx)
     # inputs = util.get_tx_inputs(tx)
-    # related_address_set = {vout.payee for vout in outputs}.union({vin.payer for vin in inputs})
-    related_address_set = {vout.payee for vout in outputs}
+    # related_address_set = {vout.payee.lower() for vout in outputs}.union({vin.payer.lower() for vin in inputs})
+    related_address_set = {vout.payee.lower() for vout in outputs}
     return not related_address_set.isdisjoint(abused_account_service.abused_account_set)
 
 
@@ -104,7 +104,7 @@ def get_payer_txs_of_account(address: str) -> List[dict]:
             for item in inputs:
                 total_balance += item[1]
             total_balance /= 1e8
-            related_address_set = {item.address for item in tx.inputs + tx.outputs}
+            related_address_set = {item.address.lower() for item in tx.inputs + tx.outputs}
             is_risky = not related_address_set.isdisjoint(abused_account_service.abused_account_set)
             result.append({
                 "txid": tx.hash,
@@ -125,7 +125,7 @@ def get_payee_txs_of_account(address: str) -> List[dict]:
             for item in outputs:
                 total_balance += item[1]
             total_balance /= 1e8
-            related_address_set = {item.address for item in tx.inputs + tx.outputs}
+            related_address_set = {item.address.lower() for item in tx.inputs + tx.outputs}
             is_risky = not related_address_set.isdisjoint(abused_account_service.abused_account_set)
             result.append({
                 "txid": tx.hash,

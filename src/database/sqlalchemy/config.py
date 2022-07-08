@@ -11,7 +11,7 @@ engine = create_engine("mysql+pymysql://%s:%s@%s:%d/%s?charset=utf8mb4" % (
     ai.get('mysql', 'host'),
     ai.getint('mysql', 'port'),
     ai.get('mysql', 'schema')
-), pool_size=4, echo=True)
+), pool_size=ai.getint('mysql', 'poolSize'), echo=True)
 
 Base = declarative_base()
 Session = sessionmaker(bind=engine)

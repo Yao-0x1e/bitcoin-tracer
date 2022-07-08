@@ -6,32 +6,37 @@ from bitcoinrpc.authproxy import AuthServiceProxy
 
 from src.app_config import app_ini as ai
 
-proxy_qsize = 4
+proxy_url = "http://%s:%s@%s:%d" % (
+    ai.get('bitcoinRPC', 'user'),
+    ai.get('bitcoinRPC', 'password'),
+    ai.get('bitcoinRPC', 'host'),
+    ai.getint('bitcoinRPC', 'port')
+)
+proxy_timeout = ai.getint('bitcoinRPC', 'timeout')
+proxy_qsize = ai.getint('bitcoinRPC', 'proxySize')
 proxy_queue = Queue()
 mutex = BoundedSemaphore(proxy_qsize)
 
 
+def init_proxy_queue():
+    for _ in range(proxy_qsize):
+        proxy = AuthServiceProxy(proxy_url, timeout=proxy_timeout)
+        proxy_queue.put(proxy)
+    pass
+
+
+# noinspection PyBroadException
 def execute(target):
     mutex.acquire()
     proxy = proxy_queue.get()
     try:
         return target(proxy)
+    except Exception as ex:
+        proxy = AuthServiceProxy(proxy_url, timeout=proxy_timeout)
+        raise ex
     finally:
         proxy_queue.put(proxy)
         mutex.release()
-    pass
-
-
-def init_proxy_queue():
-    proxy_url = "http://%s:%s@%s:%d" % (
-        ai.get('bitcoinRPC', 'user'),
-        ai.get('bitcoinRPC', 'password'),
-        ai.get('bitcoinRPC', 'host'),
-        ai.getint('bitcoinRPC', 'port')
-    )
-    for _ in range(proxy_qsize):
-        proxy = AuthServiceProxy(proxy_url)
-        proxy_queue.put(proxy)
     pass
 
 

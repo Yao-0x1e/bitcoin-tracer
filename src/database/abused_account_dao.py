@@ -32,6 +32,7 @@ def select_all() -> List[AbusedAccount]:
     return safe_query(lambda session: session.query(AbusedAccount).all())
 
 
-def select_all_addresses() -> List[AbusedAccount]:
+def select_all_addresses() -> List[str]:
     # noinspection PyUnresolvedReferences
-    return safe_query(lambda session: session.query(AbusedAccount.address).distinct(AbusedAccount.address).all())
+    result = safe_query(lambda session: session.query(AbusedAccount.address).distinct(AbusedAccount.address).all())
+    return [item[0] for item in result]

@@ -13,7 +13,7 @@ abused_account_set = set()
 def init_abused_account_set():
     abused_addresses = abused_account_dao.select_all_addresses()
     for address in abused_addresses:
-        abused_account_set.add(address)
+        abused_account_set.add(address.lower())
     print(f"恶意地址数据集初始化完成：{len(abused_account_set)}")
     pass
 
@@ -67,5 +67,5 @@ def get_related_abused_accounts(address: str):
 
 # 初始化恶意账户数据表
 init_abused_account_table()
-# 初始化恶意地址集合提高查询速度
+# 初始化恶意地址集合提高查询速度（全部转换为小写）
 init_abused_account_set()

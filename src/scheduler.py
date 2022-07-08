@@ -4,6 +4,7 @@ from threading import Thread
 import schedule
 
 from src import app_context
+from src.app_config import app_ini as ai
 from src.service import address_service, block_service, transaction_service
 
 
@@ -17,13 +18,14 @@ def scheduled_task():
 
 
 def setup_schedules():
-    # schedule.every(5).minutes.do(scheduled_task)
-    schedule.every(1).seconds.do(scheduled_task)
+    interval = ai.getint('schedule', 'interval')
+    schedule.every(interval).seconds.do(scheduled_task)
 
     def run_schedules():
+        schedule.run_all(delay_seconds=interval)
         while True:
             schedule.run_pending()
-            time.sleep(1)
+            time.sleep(15)
 
     Thread(target=run_schedules).start()
     pass
