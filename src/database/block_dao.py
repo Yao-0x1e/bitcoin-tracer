@@ -4,7 +4,7 @@ from typing import List
 from sqlalchemy import and_, func
 
 from src.database.entity import Block
-from src.database.sqlalchemy_utils import safe_query
+from src.database.utils import safe_query
 
 
 def get_blocks_between_timestamps(start_time: datetime, end_time: datetime) -> List[Block]:

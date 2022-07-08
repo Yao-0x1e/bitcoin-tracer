@@ -114,7 +114,7 @@ def setup_transaction_restapi(app):
     @app.route('/btc/getTransactionCountInRecentHours', methods=['GET', 'POST'])
     @restapi
     def get_transaction_count_in_recent_hours():
-        tx_counts = transaction_service.get_transaction_count_in_recent_hours()
+        tx_counts = transaction_service.get_cached_transaction_counts_in_recent_hours()
         return {"txCounts": tx_counts}
 
     @app.route('/btc/getInputTransactionTree', methods=['GET', 'POST'])

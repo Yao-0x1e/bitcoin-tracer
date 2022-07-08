@@ -15,8 +15,8 @@ def setup_address_restapi(app):
 
     @app.route('/btc/getActiveAddressCountInRecentHours', methods=['GET', 'POST'])
     @restapi
-    def get_active_address_count_in_recent_hours():
-        address_counts = address_service.get_cached_active_address_count_in_recent_hours
+    def get_active_address_counts_in_recent_hours():
+        address_counts = address_service.get_cached_active_address_counts_in_recent_hours
         return {"addressCounts": address_counts}
 
     @app.route('/btc/getActiveAddressCount', methods=['GET', 'POST'])

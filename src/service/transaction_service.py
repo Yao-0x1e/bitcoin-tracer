@@ -6,14 +6,14 @@ from typing import List
 import ujson
 from blockchain import blockexplorer
 
-from src.bitcoin import util, rpc
+from src.bitcoin import utils, rpc
 from src.config.redis_config import redis_conn
 from src.database import block_dao
 from src.service import abused_account_service
 
 
 def is_risky_tx(tx: dict) -> bool:
-    outputs = util.get_tx_outputs(tx)
+    outputs = utils.get_tx_outputs(tx)
     # inputs = util.get_tx_inputs(tx)
     # related_address_set = {vout.payee.lower() for vout in outputs}.union({vin.payer.lower() for vin in inputs})
     related_address_set = {vout.payee.lower() for vout in outputs}
@@ -22,7 +22,7 @@ def is_risky_tx(tx: dict) -> bool:
 
 def get_tx_inputs(txid: str) -> List[dict]:
     tx = rpc.get_raw_transaction(txid)
-    inputs = util.get_tx_inputs(tx)
+    inputs = utils.get_tx_inputs(tx)
     return [{
         "address": item.payer,
         "balance": item.balance,
@@ -32,7 +32,7 @@ def get_tx_inputs(txid: str) -> List[dict]:
 
 def get_tx_outputs(txid: str) -> List[dict]:
     tx = rpc.get_raw_transaction(txid)
-    outputs = util.get_tx_outputs(tx)
+    outputs = utils.get_tx_outputs(tx)
     return [{
         "address": item[0],
         "balance": item[1],
@@ -43,7 +43,7 @@ def get_tx_outputs(txid: str) -> List[dict]:
 def get_input_txs(txid: str) -> List[dict]:
     tx = rpc.get_raw_transaction(txid)
     result = list()
-    if not util.is_coinbase_tx(tx):
+    if not utils.is_coinbase_tx(tx):
         spent_txids = [item['txid'] for item in tx['vin']]
         spent_txs = rpc.get_raw_transactions(spent_txids)
         for spent_tx in spent_txs:
@@ -156,7 +156,7 @@ def get_latest_txs(block_count: int) -> List[dict]:
             result.append({
                 "txid": tx['txid'],
                 "isRisky": is_risky_tx(tx),
-                "balance": util.get_total_balance(tx),
+                "balance": utils.get_total_balance(tx),
                 "time": block_time
             })
     result = sorted(result, reverse=True, key=lambda item: item['balance'])
@@ -182,7 +182,7 @@ def get_latest_risky_txs(block_count: int) -> List[dict]:
             block_time = tx['blocktime']
             result.append({
                 "txid": tx['txid'],
-                "balance": util.get_total_balance(tx),
+                "balance": utils.get_total_balance(tx),
                 "time": block_time
             })
     return list(sorted(result, key=lambda x: x['balance'], reverse=True))
@@ -208,7 +208,7 @@ def get_tx_count(start_time: int, end_time: int) -> int:
     return result
 
 
-def get_tx_count_in_recent_hours(num_hours: int) -> List[dict]:
+def get_tx_counts_in_recent_hours(num_hours: int) -> List[dict]:
     result = list()
     end_time = int(datetime.now().replace(minute=0, second=0, microsecond=0).timestamp())
     print(end_time)
@@ -237,7 +237,7 @@ def get_latest_large_balance_txs(block_count: int, tx_count: int) -> List[dict]:
     priority_queue = PriorityQueue()
     min_balance = 0
     for tx in txs:
-        total_balance = util.get_total_balance(tx)
+        total_balance = utils.get_total_balance(tx)
         if total_balance >= min_balance:
             block_time = tx['blocktime']
             item = (total_balance, tx['txid'], block_time)
@@ -263,15 +263,15 @@ def get_latest_large_balance_tx_count(block_count: int, min_balance: float) -> i
     for _ in range(block_count):
         block = rpc.get_block(block_hash)
         for tx in block['tx']:
-            total_balance = util.get_total_balance(tx)
+            total_balance = utils.get_total_balance(tx)
             if total_balance >= min_balance:
                 result += 1
         block_hash = block['previousblockhash']
     return result
 
 
-def get_transaction_count_in_recent_hours():
-    json_str = redis_conn.get('statistic:transaction-count-in-recent-hours')
+def get_cached_transaction_counts_in_recent_hours():
+    json_str = redis_conn.get('statistic:transaction-counts-in-recent-hours')
     tx_counts = ujson.loads(json_str) if json_str is not None else []
     return tx_counts
 

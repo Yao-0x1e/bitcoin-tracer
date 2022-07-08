@@ -3,7 +3,7 @@ from typing import List
 from sqlalchemy import func
 
 from src.database.entity import AbusedAccount
-from src.database.sqlalchemy_utils import safe_query, safe_update
+from src.database.utils import safe_query, safe_update
 
 
 def count_all() -> int:

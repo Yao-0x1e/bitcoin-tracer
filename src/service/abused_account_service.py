@@ -2,10 +2,10 @@ from datetime import datetime
 
 from blockchain import blockexplorer
 
-from src.bitcoin import abuse_db, rpc, util
+from src.bitcoin import abuse_db, rpc, utils
 from src.database import abused_account_dao
 from src.database.entity import AbusedAccount
-from src.database.sqlalchemy_utils import batch_insert
+from src.database.utils import batch_insert
 
 abused_account_set = set()
 
@@ -52,7 +52,7 @@ def get_related_abused_accounts(address: str):
     result = list()
     txs = rpc.get_raw_transactions(txids)
     for tx in txs:
-        outputs = util.get_tx_outputs(tx)
+        outputs = utils.get_tx_outputs(tx)
         address_iter = [item.payee for item in outputs]
         for item in address_iter:
             if item != address:
