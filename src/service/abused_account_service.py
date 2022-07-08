@@ -4,7 +4,7 @@ import ujson
 from blockchain import blockexplorer
 
 from src.bitcoin import abuse_db, rpc, utils
-from src.config.redis_config import redis_conn
+from src.config.redis_config import redis_conn, cacheable, cacheevit
 from src.database import abused_account_dao
 from src.database.entity import AbusedAccount
 from src.database.utils import batch_insert
@@ -47,28 +47,18 @@ def add_abused_account(address: str, message: str, abuser: str):
     pass
 
 
+@cacheable(prefix='abuse-messages')
 def get_abuse_messages(address: str):
-    redis_key = 'abuse-messages:' + address
-    redis_val = redis_conn.get(redis_key)
-    if redis_val is not None:
-        return ujson.loads(redis_val)
-
     abused_accounts = abused_account_dao.select_by_address(address)
-    result = [{
+    return [{
         "message": item.message,
         "translatedMessage": item.message,
         "info": f'{item.uploader} 上传于 {item.created_at.strftime("%Y-%m-%d %H:%M:%S")}'
     } for item in abused_accounts]
-    redis_conn.set(redis_key, ujson.dumps(result))
-    return result
 
 
+@cacheable(prefix='related-abused-accounts', ex=3600)
 def get_related_abused_accounts(address: str):
-    redis_key = 'related-abuse-accounts:' + address
-    redis_val = redis_conn.get(redis_key)
-    if redis_val is not None:
-        return ujson.loads(redis_val)
-
     target_address = get_address_info(address)
     txids = [tx.hash for tx in target_address.transactions]
     result = list()
@@ -84,7 +74,6 @@ def get_related_abused_accounts(address: str):
                         "address": item,
                         "abuses": messages
                     })
-    redis_conn.set(redis_key, ujson.dumps(result), ex=6 * 3600)
     return result
 
 

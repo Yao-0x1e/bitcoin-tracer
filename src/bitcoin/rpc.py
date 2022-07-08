@@ -2,11 +2,10 @@ from queue import Queue
 from threading import BoundedSemaphore
 from typing import List
 
-import ujson
 from bitcoinrpc.authproxy import AuthServiceProxy
 
 from src.config.app_config import app_ini as ai
-from src.config.redis_config import redis_conn
+from src.config.redis_config import cacheable
 
 proxy_url = "http://%s:%s@%s:%d" % (
     ai.get('bitcoin', 'rpc_user'),
@@ -42,14 +41,12 @@ def execute(target):
     pass
 
 
+@cacheable(prefix='rpc:rawtransaction')
 def get_raw_transaction(txid: str) -> dict:
-    redis_key = 'rawtransactions:' + txid
-    redis_val = redis_conn.get(redis_key)
-    if redis_val is not None:
-        return ujson.loads(redis_val)
     return execute(lambda proxy: proxy.getrawtransaction(txid, 1))
 
 
+@cacheable(prefix='rpc:rawtransactions')
 def get_raw_transactions(txids: List[str]) -> List[dict]:
     return execute(lambda proxy: proxy.batch_([['getrawtransaction', txid, 1] for txid in txids]))
 
@@ -66,28 +63,34 @@ def get_latest_block_hash() -> str:
     return execute(lambda proxy: proxy.getbestblockhash())
 
 
+@cacheable(prefix='rpc:blockhash')
 def get_block_hash(block_num: int) -> str:
     return execute(lambda proxy: proxy.getblockhash(block_num))
 
 
+@cacheable(prefix='rpc:blockhashes')
 def get_block_hashes(block_nums: List[int]) -> List[dict]:
     return execute(lambda proxy: proxy.batch_([['getblockhash', block_num] for block_num in block_nums]))
 
 
+@cacheable(prefix='rpc:block')
 def get_block(block_hash: str, only_txids: bool = False) -> dict:
     verbosity = 1 if only_txids else 2
     return execute(lambda proxy: proxy.getblock(block_hash, verbosity))
 
 
+@cacheable(prefix='rpc:blocks')
 def get_blocks(block_hashes: List[str], only_txids: bool = False) -> List[dict]:
     verbosity = 1 if only_txids else 2
     return execute(lambda proxy: proxy.batch_([['getblock', block_hash, verbosity] for block_hash in block_hashes]))
 
 
+@cacheable(prefix='rpc:blockheader')
 def get_block_header(block_hash: str) -> dict:
     return execute(lambda proxy: proxy.getblockheader(block_hash))
 
 
+@cacheable(prefix='rpc:blockheaders')
 def get_block_headers(block_hashes: List[str]) -> List[dict]:
     return execute(lambda proxy: proxy.batch_([['getblockheader', block_hash] for block_hash in block_hashes]))
 
