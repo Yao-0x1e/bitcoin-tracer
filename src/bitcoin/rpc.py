@@ -48,7 +48,7 @@ def get_raw_transaction(txid: str) -> dict:
     return execute(lambda proxy: proxy.getrawtransaction(txid, 1))
 
 
-@cacheable(prefix='rpc:rawtransactions', key_handler=lambda key: str(hash(key)))
+@cacheable(prefix='rpc:rawtransactions', suffix_handler=lambda key: str(hash(key)))
 def get_raw_transactions(txids: List[str]) -> List[dict]:
     return execute(lambda proxy: proxy.batch_([['getrawtransaction', txid, 1] for txid in txids]))
 
@@ -70,7 +70,7 @@ def get_block_hash(block_num: int) -> str:
     return execute(lambda proxy: proxy.getblockhash(block_num))
 
 
-@cacheable(prefix='rpc:blockhashes', key_handler=lambda key: str(hash(key)))
+@cacheable(prefix='rpc:blockhashes', suffix_handler=lambda key: str(hash(key)))
 def get_block_hashes(block_nums: List[int]) -> List[dict]:
     return execute(lambda proxy: proxy.batch_([['getblockhash', block_num] for block_num in block_nums]))
 
@@ -81,7 +81,7 @@ def get_block(block_hash: str, only_txids: bool = False) -> dict:
     return execute(lambda proxy: proxy.getblock(block_hash, verbosity))
 
 
-@cacheable(prefix='rpc:blocks', key_handler=lambda key: str(hash(key)))
+@cacheable(prefix='rpc:blocks', suffix_handler=lambda key: str(hash(key)))
 def get_blocks(block_hashes: List[str], only_txids: bool = False) -> List[dict]:
     verbosity = 1 if only_txids else 2
     return execute(lambda proxy: proxy.batch_([['getblock', block_hash, verbosity] for block_hash in block_hashes]))
@@ -92,7 +92,7 @@ def get_block_header(block_hash: str) -> dict:
     return execute(lambda proxy: proxy.getblockheader(block_hash))
 
 
-@cacheable(prefix='rpc:blockheaders', key_handler=lambda key: str(hash(key)))
+@cacheable(prefix='rpc:blockheaders', suffix_handler=lambda key: str(hash(key)))
 def get_block_headers(block_hashes: List[str]) -> List[dict]:
     return execute(lambda proxy: proxy.batch_([['getblockheader', block_hash] for block_hash in block_hashes]))
 
