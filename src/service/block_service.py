@@ -1,17 +1,12 @@
 from datetime import datetime
 import time
 from threading import Thread
-
 import schedule
-import ujson
 
-from src.config.app_config import app_ini as ai
 from src.bitcoin import rpc
-from src.config.redis_config import redis_conn
 from src.database import block_dao
 from src.database.entity import Block
 from src.database.utils import batch_insert
-from src.service import address_service, transaction_service
 
 
 def synchronize_blocks(batch_size: int):
@@ -36,26 +31,14 @@ def synchronize_blocks(batch_size: int):
 
 
 def setup_schedules():
-    def scheduled_task():
-        synchronize_blocks(batch_size=64)
-        redis_conn.set('statistic:active-address-counts-in-recent-hours', ujson.dumps(address_service.get_active_address_counts_in_recent_hours(num_hours=24)))
-        redis_conn.set('statistic:transaction-counts-in-recent-hours', ujson.dumps(transaction_service.get_tx_counts_in_recent_hours(num_hours=24)))
-        redis_conn.set('statistic:risky-transactions', ujson.dumps(transaction_service.get_latest_risky_txs(block_count=50)))
-        redis_conn.set('statistic:large-balance-transactions', ujson.dumps(transaction_service.get_latest_large_balance_txs(block_count=50, tx_count=300)))
-        pass
-
-    interval = ai.getint('schedule', 'interval')
-    schedule.every(interval).seconds.do(scheduled_task)
+    schedule.every(10).minutes.do(lambda: synchronize_blocks(batch_size=64))
 
     def run_schedules():
-        schedule.run_all(delay_seconds=interval)
+        print("定时任务已开始执行！")
+        schedule.run_all(delay_seconds=10 * 60)
         while True:
             schedule.run_pending()
             time.sleep(15)
 
     Thread(target=run_schedules).start()
     pass
-
-
-# 开始定时任务
-setup_schedules()

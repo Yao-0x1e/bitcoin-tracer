@@ -5,7 +5,7 @@ services:
     container_name: bitcoin-tracer-app
     restart: always
     privileged: true
-    image: "bitcoin-tracer-app:latest"
+    image: "bitcoin-tracer:latest"
     ports:
       - "5000:5000"
     working_dir: /opt/bitcoin-tracer

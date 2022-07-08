@@ -71,8 +71,8 @@ def setup_transaction_restapi(app):
 
     @app.route('/btc/getCachedLargeBalanceTransactions', methods=['GET', 'POST'])
     @restapi
-    def get_cached_large_balance_transactions():
-        txs = transaction_service.get_cached_large_balance_transactions()
+    def get_large_balance_transactions_in_recent_blocks():
+        txs = transaction_service.get_latest_large_balance_txs(block_count=50, tx_count=300)
         return {"txs": txs}
 
     @app.route('/btc/getLatestRiskyTransactions', methods=['GET', 'POST'])
@@ -84,8 +84,8 @@ def setup_transaction_restapi(app):
 
     @app.route('/btc/getCachedRiskyTransactions', methods=['GET', 'POST'])
     @restapi
-    def get_cached_risky_transactions():
-        txs = transaction_service.get_cached_risky_transactions()
+    def get_risky_transactions_in_recent_blocks():
+        txs = transaction_service.get_latest_risky_txs(block_count=50)
         return {"txs": txs}
 
     @app.route('/btc/getLatestTransactionCount', methods=['GET', 'POST'])
@@ -113,8 +113,8 @@ def setup_transaction_restapi(app):
 
     @app.route('/btc/getTransactionCountInRecentHours', methods=['GET', 'POST'])
     @restapi
-    def get_transaction_count_in_recent_hours():
-        tx_counts = transaction_service.get_cached_transaction_counts_in_recent_hours()
+    def get_transaction_counts_in_recent_hours():
+        tx_counts = transaction_service.get_tx_counts_in_recent_hours(num_hours=24)
         return {"txCounts": tx_counts}
 
     @app.route('/btc/getInputTransactionTree', methods=['GET', 'POST'])

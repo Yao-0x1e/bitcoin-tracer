@@ -268,19 +268,3 @@ def get_latest_large_balance_tx_count(block_count: int, min_balance: float) -> i
                 result += 1
         block_hash = block['previousblockhash']
     return result
-
-
-def get_cached_transaction_counts_in_recent_hours():
-    json_str = redis_conn.get('statistic:transaction-counts-in-recent-hours')
-    tx_counts = ujson.loads(json_str) if json_str is not None else []
-    return tx_counts
-
-
-def get_cached_risky_transactions():
-    json_str = redis_conn.get('statistic:risky-transactions')
-    return ujson.loads(json_str) if json_str is not None else []
-
-
-def get_cached_large_balance_transactions():
-    json_str = redis_conn.get('statistic:large-balance-transactions')
-    return ujson.loads(json_str) if json_str else []

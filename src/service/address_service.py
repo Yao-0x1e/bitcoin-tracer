@@ -45,8 +45,3 @@ def get_active_address_counts_in_recent_hours(num_hours: int) -> List[dict]:
         end_time -= 3600
         start_time -= 3600
     return list(reversed(result))
-
-
-def get_cached_active_address_counts_in_recent_hours():
-    json_str = redis_conn.get('statistic:active-address-counts-in-recent-hours')
-    return ujson.loads(json_str) if json_str is not None else []
