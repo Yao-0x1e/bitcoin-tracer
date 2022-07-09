@@ -180,7 +180,7 @@ def get_latest_txs(block_count: int) -> List[dict]:
     return list(risky_txs) + list(non_risky_txs)
 
 
-@cacheable(prefix='transaction:latest-risky-txs', ex=600)
+@cacheable(prefix='transaction:latest-risky-txs', ex=1800)
 def get_latest_risky_txs(block_count: int) -> List[dict]:
     txs = list()
     block_hash = rpc.get_latest_block_hash()
@@ -226,7 +226,7 @@ def get_tx_count(start_time: int, end_time: int) -> int:
     return result
 
 
-@cacheable(prefix='transaction:count-in-recent-hours', ex=3600)
+@cacheable(prefix='transaction:count-in-recent-hours', ex=2 * 3600)
 def get_tx_counts_in_recent_hours(num_hours: int) -> List[dict]:
     result = list()
     end_time = int(datetime.now().replace(minute=0, second=0, microsecond=0).timestamp())
@@ -242,7 +242,7 @@ def get_tx_counts_in_recent_hours(num_hours: int) -> List[dict]:
     return list(reversed(result))
 
 
-@cacheable(prefix='transaction:large-balance-txs', ex=600)
+@cacheable(prefix='transaction:large-balance-txs', ex=1800)
 def get_latest_large_balance_txs(block_count: int, tx_count: int) -> List[dict]:
     txs = list()
     block_hash = rpc.get_latest_block_hash()

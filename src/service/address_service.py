@@ -33,7 +33,7 @@ def get_active_address_count(start_time: int, end_time: int) -> int:
     return result
 
 
-@cacheable(prefix='address:counts-in-recent-hours')
+@cacheable(prefix='address:counts-in-recent-hours', ex=2 * 3600)
 def get_active_address_counts_in_recent_hours(num_hours: int) -> List[dict]:
     result = list()
     end_time = int(datetime.now().replace(minute=0, second=0, microsecond=0).timestamp())
