@@ -2,28 +2,25 @@ from queue import Queue
 from threading import BoundedSemaphore
 from typing import List
 
-from bitcoinrpc.authproxy import AuthServiceProxy
-
+from bitcoinutils.setup import setup
+from bitcoinutils.proxy import NodeProxy
 from src.config.app_config import app_ini as ai
 from src.config.redis_config import cacheable
 
-# TODO: 修复错误 [Errno 32] Broken pipe
-
-proxy_url = "http://%s:%s@%s:%d" % (
-    ai.get('bitcoin', 'rpc_user'),
-    ai.get('bitcoin', 'rpc_password'),
-    ai.get('bitcoin', 'rpc_host'),
-    ai.getint('bitcoin', 'rpc_port')
-)
-proxy_timeout = ai.getint('bitcoin', 'rpc_timeout')
+proxy_user = ai.get('bitcoin', 'rpc_user')
+proxy_password = ai.get('bitcoin', 'rpc_password')
+proxy_host = ai.get('bitcoin', 'rpc_host')
+proxy_port = ai.getint('bitcoin', 'rpc_port')
 proxy_qsize = ai.getint('bitcoin', 'proxy_queue_size')
+
 proxy_queue = Queue()
 mutex = BoundedSemaphore(proxy_qsize)
 
 
 def init_proxy_queue():
+    setup('mainnet')
     for _ in range(proxy_qsize):
-        proxy = AuthServiceProxy(proxy_url, timeout=proxy_timeout)
+        proxy = NodeProxy(proxy_user, proxy_password, proxy_host, proxy_port).get_proxy()
         proxy_queue.put(proxy)
     pass
 
@@ -34,10 +31,9 @@ def execute(target):
     proxy = proxy_queue.get()
     try:
         return target(proxy)
-    except Exception as ex:
-        proxy = AuthServiceProxy(proxy_url, timeout=proxy_timeout)
-        raise ex
     finally:
+        del proxy
+        proxy = NodeProxy(proxy_user, proxy_password, proxy_host, proxy_port).get_proxy()
         proxy_queue.put(proxy)
         mutex.release()
     pass

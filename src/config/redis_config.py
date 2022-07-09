@@ -17,9 +17,8 @@ def cacheable(prefix: str, separator: str = '_', ex: int = None, serializer=ujso
         def wrapper(*args, **kwargs):
             # 一个星号将参数以元组的形式导入
             # 两个星号将参数以字典的形式导入
-            params = [str(arg) for arg in args] + [str(kwarg) for kwarg in kwargs.values()]
-            joined_args = separator.join(params)
-            suffix = joined_args if suffix_handler is None else suffix_handler(joined_args)
+            arg_str = separator.join([str(arg) for arg in args] + [str(kwarg) for kwarg in kwargs.values()])
+            suffix = arg_str if suffix_handler is None else suffix_handler(arg_str)
             redis_key = f'{prefix}:{suffix}'.replace(' ', '')
             redis_val = redis_conn.get(redis_key)
             if redis_val is not None:
