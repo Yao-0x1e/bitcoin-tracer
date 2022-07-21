@@ -23,8 +23,8 @@ def setup_all_restapi():
 def run_flask_server():
     flask_host = ai.get('flask', 'host')
     flask_port = ai.getint('flask', 'port')
-    app.run(host=flask_host, port=flask_port, debug=False, threaded=True)
-    # pywsgi.WSGIServer((flask_host, flask_port), app).serve_forever()
+    # app.run(host=flask_host, port=flask_port, debug=False, threaded=True)
+    pywsgi.WSGIServer((flask_host, flask_port), app).serve_forever()
     pass
 
 

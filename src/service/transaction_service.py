@@ -3,8 +3,6 @@ from datetime import datetime
 from queue import Queue, PriorityQueue
 from typing import List
 
-from blockchain import blockexplorer
-
 from src.bitcoin import utils, rpc
 from src.config.redis_config import cacheable, redis_conn
 from src.database import block_dao
